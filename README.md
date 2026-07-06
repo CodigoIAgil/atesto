@@ -1,4 +1,4 @@
-# ATESTO
+# ATESTO-FRAMEWORK
 
 > **An attestation framework for AI-assisted development.**
 > Desenvolvimento Verificado por Camadas.
