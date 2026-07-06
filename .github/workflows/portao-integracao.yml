@@ -1,0 +1,51 @@
+# ATESTO — Portão de Integração (exemplo mínimo, perfil Baseline)
+# Este workflow é o "ambiente efêmero elegível" do Baseline: runner da plataforma,
+# configuração versionada, Executor sem acesso ao runtime.
+# Marque este check como OBRIGATÓRIO na branch protection da main.
+name: atesto-portao-integracao
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  portao:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hash dos atores (régua auditável)
+        run: |
+          if [ -d atores ]; then
+            find atores -type f -name '*.md' -exec sha256sum {} \; | sort | sha256sum | tee atores.hash
+          else
+            echo "ERRO: diretório atores/ ausente — instale o ATESTO antes do portão" && exit 1
+          fi
+
+      - name: Scanner de segredos (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Testes (detecção simples de stack)
+        run: |
+          set -e
+          if [ -f package.json ]; then npm ci && npm test; fi
+          if [ -f requirements.txt ] || [ -f pyproject.toml ]; then
+            pip install -r requirements.txt 2>/dev/null || pip install -e . 2>/dev/null || true
+            pip install pytest && pytest -q
+          fi
+
+      - name: Auditoria de dependências
+        run: |
+          set -e
+          if [ -f package.json ]; then npm audit --audit-level=moderate; fi
+          if [ -f requirements.txt ]; then pip install pip-audit && pip-audit -r requirements.txt; fi
+
+      - name: Publicar evidência (origem = este job)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-portao-${{ github.event.pull_request.head.sha }}
+          path: |
+            atores.hash

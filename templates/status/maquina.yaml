@@ -1,0 +1,13 @@
+# Estado da máquina — escrito SOMENTE pelo orquestrador em transição de portão
+perfil: baseline            # baseline | profissional | regulado
+fase: F4                    # F0..F7
+bloco_atual: bloco-exemplo
+ultimo_portao:
+  portao: integracao        # arquitetura | integracao | publicacao
+  bloco: bloco-exemplo
+  veredito: aprovado        # aprovado | reprovado
+  evidencia: <ref do artifact do job>
+  commit: <sha>
+  atores_hash: <sha256>
+pendencias_seguranca: []    # [{id, severidade, descricao, prazo, responsavel}]
+fast_tracks_no_periodo: 0   # telemetria anti-abuso (§7.1)

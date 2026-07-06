@@ -1,0 +1,9 @@
+# Estado de um bloco — um arquivo por bloco evita conflito de merge em paralelo
+bloco: bloco-exemplo
+branch: bloco/exemplo
+spec: docs/specs/bloco-exemplo.md
+criterio_de_sucesso: "todos os testes de tests/exemplo/ passam; contrato com bloco-auth validado"
+premissa_fragil: "API X aceita autenticação por token — verificada em <evidência>"
+estado: em_desenvolvimento   # spec | em_desenvolvimento | em_portao | atestado
+veredito: null
+evidencia: null
