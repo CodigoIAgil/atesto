@@ -26,6 +26,7 @@ Quatro atores. Uma máquina de estados (F0–F7). Três portões. Uma cadeia de 
 
 ## Comece aqui
 
+0. **O caminho de um comando:** [INICIE-AQUI.md](INICIE-AQUI.md) — baixe o pacote, extraia e crie seu projeto com o método instalado via `bash iniciar.sh nome-do-projeto`.
 1. **Nunca programou?** Comece pelo [guia do zero absoluto](guias/f3-do-zero-absoluto.md) — da criação da conta GitHub à máquina pronta (Windows ou Linux).
 2. Leia o [DOCUMENTO-MESTRE.md](DOCUMENTO-MESTRE.md) — a constituição (15 min). Quer ver o método em ação antes? [Um projeto real atravessando F0→F7](exemplos/percurso-completo.md).
 3. Siga o guia da sua ferramenta: [Claude Code](guias/claude-code.md) ou [VS Code](guias/vs-code.md) — primeiro portão em ~30 minutos (perfil Baseline).
@@ -46,6 +47,9 @@ guias/                adoção prática (Claude Code, VS Code)
 
 Versão 0.3 — primeira publicação, após duas rodadas de auditoria adversarial externa (10 achados triados; changelog no documento-mestre). Críticas são bem-vindas **no formato do próprio método**: abra uma Issue citando a seção exata, o cenário concreto de falha e como reproduzi-lo. Achados sem cenário reproduzível serão fechados com referência ao antipadrão *Crítica não verificada*.
 
-## Licença
+## Licença, autoria e marca
 
-MIT — use, adapte, critique.
+MIT — use, adapte, critique, **mantendo o aviso de copyright** (é a única exigência da licença).
+© 2026 **Fabiano Dos Santos** — CEO, [CódigoIAgil](https://github.com/CodigoIAgil).
+"ATESTO" é marca do projeto: a licença cobre o conteúdo, não cede o uso do nome
+(ver [docs/seguranca-do-repositorio.md](docs/seguranca-do-repositorio.md)).
