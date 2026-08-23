@@ -25,12 +25,25 @@ git clone https://github.com/CodigoIAgil/atesto.git
   (o Git Bash vem junto com o Git; não tem Git? Siga [o guia do zero absoluto](guias/f3-do-zero-absoluto.md)).
 - **Linux/macOS:** `cd ~/projetos/atesto`
 
-## 3. O comando único
+## 3. O comando único — escolha a linha do SEU sistema
 
+**Windows (PowerShell):**
+```powershell
+.\iniciar.ps1 nome-do-seu-projeto
+# Ex.: .\iniciar.ps1 agenda-pet
+# Bloqueou com "execution of scripts is disabled"? Rode uma vez, só nesta janela:
+#   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+**Linux, macOS ou Git Bash (no Windows):**
 ```bash
 bash iniciar.sh nome-do-seu-projeto
 # Ex.: bash iniciar.sh agenda-pet
 ```
+
+> Na dúvida sobre qual é o seu shell: se o comando `$PSVersionTable.PSVersion` mostrar uma
+> tabela, você está no PowerShell (use o `.ps1`); se der erro "não reconhecido", você está
+> num shell estilo Unix (use o `.sh`). **Não misture:** `bash ...` num PowerShell falha.
 
 **O que acontece (e o output esperado):**
 ```

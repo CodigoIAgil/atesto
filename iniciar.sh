@@ -42,6 +42,7 @@ mkdir -p "$DESTINO/status" "$DESTINO/.github/workflows" "$DESTINO/docs"
 # O método: atores (a régua), estado, portões (CI) e referências
 cp -r "$ATESTO_DIR/atores" "$DESTINO/atores"
 cp "$ATESTO_DIR/templates/STATUS.md" "$DESTINO/STATUS.md"
+cp "$ATESTO_DIR/templates/triagem-f0.md" "$DESTINO/triagem-f0.md"
 cp "$ATESTO_DIR/templates/status/maquina.yaml" "$DESTINO/status/maquina.yaml"
 cp "$ATESTO_DIR/templates/status/bloco-exemplo.yaml" "$DESTINO/status/bloco-exemplo.yaml"
 cp "$ATESTO_DIR/.github/workflows/portao-integracao.yml" "$DESTINO/.github/workflows/portao-integracao.yml"

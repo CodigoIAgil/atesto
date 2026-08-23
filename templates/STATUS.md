@@ -24,6 +24,11 @@
 ## Pendências imediatas
 [incluindo Pendências de Segurança: id, severidade, prazo, responsável]
 
+## Qualidade da direção (telemetria do Raciocínio)
+[divergências instrução↔output real nesta sessão: quantas vezes um comando/prompt do
+Raciocínio produziu output diferente do esperado. Zero é o alvo. Recorrência é red flag
+DA DIREÇÃO (premissa mal verificada), não do Operador — ver GAP do Portão de Prompt.]
+
 ## Riscos e cuidados
 [o que a próxima sessão precisa saber para não quebrar nada]
 
