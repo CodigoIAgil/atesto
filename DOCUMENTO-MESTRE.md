@@ -6,7 +6,7 @@
 | Campo | Valor |
 | --- | --- |
 | Documento | Documento-Mestre (constituição do ecossistema) |
-| Versão | 0.3.1 — correções estruturais pós-publicação (links, licença, portão de exemplo endurecido) |
+| Versão | 0.3.2 — mínimo executável completo (portões F5/F7, checklist OWASP, templates operacionais, guia do zero absoluto) |
 | Status | PUBLICADO |
 | Autoridade | Este documento prevalece sobre qualquer outro documento do ecossistema em caso de conflito |
 | Marca | "ATESTO" é parametrizável; a arquitetura não depende do nome |
@@ -318,6 +318,8 @@ tag/release: somente apos F5, assinada conforme perfil
 
 Consequências práticas: (a) commits acontecem durante o desenvolvimento, pré-validação, o tempo todo — são backup e histórico; (b) trabalho interrompido fica seguro no branch do bloco, com push feito, sem contaminar a main — o estado registrado permite retomada sem perguntas; (c) subir branch não é publicar — falha achada no branch entra no Circuito de Correção no próprio branch; a main só recebe o que atravessou portão; a release só existe após F5. **Proteção da main (branch protection) é obrigatória desde o Baseline** — sem ela, "merge é portão" é promessa, não mecanismo.
 
+**Quem opera o Git — a divisão de propriedade.** O repositório nasce em F3, e nasce em duas mãos com papéis fixos: o **Operador funda a propriedade** — cria a conta, o repositório e a branch protection, guiado comando a comando pelo Modo Mentor — porque conta e proteção são as chaves do projeto, e **chaves pertencem ao humano** (quem configura a jaula não pode ser quem mora nela; é o mesmo racional do ambiente efêmero do Validador). Dali em diante o **Executor opera toda a mecânica**: branches, commits, push, abertura de Pull Requests, correções no branch quando o portão reprova — o Operador não digita comando git no dia a dia. Restam ao humano exatamente os atos soberanos: revisar o que o portão sinalizar (em especial "régua alterada"), aceitar riscos por escrito, e **clicar Merge quando o portão estiver verde**. O clique do merge permanece humano por desenho, não por limitação: o merge é o portão, e atravessá-lo é o ato de aceite que nenhuma camada pode exercer pelo Operador.
+
 ---
 
 ## 11. Persistência de estado — STATUS.md e `status/`
@@ -462,18 +464,27 @@ atesto/
 │   ├── portoes.md             <- especificacao normativa dos 3 portoes
 │   ├── cadeia-de-evidencias.md
 │   ├── perfis.md              <- requisitos por perfil de conformidade
+│   ├── checklist-owasp.md     <- OWASP Top 10 operacional (F5)
 │   └── historico/             <- conteudo removido/meta com valor de referencia
 ├── templates/
 │   ├── STATUS.md              <- template narrativo
 │   ├── status/                <- maquina.yaml e bloco.yaml de exemplo
 │   ├── veredito-portao.md     <- formato do veredito + evidencia
+│   ├── spec-bloco.md          <- spec com criterio de sucesso + abuso considerado
+│   ├── runbook-fast-track.md  <- pre-autorizacao escrita do Operador (§7.1)
+│   ├── aceite-de-risco.md     <- aceite formal de pendencia baixa (§8)
+│   ├── rollback.md            <- rollback documentado E testado (pre-condicao F7)
 │   ├── CODEOWNERS             <- protecao da regua (atores/ + workflows)
 │   └── evidencias/            <- estrutura padrao dos artefatos
+├── exemplos/
+│   └── percurso-completo.md   <- um projeto real atravessando F0->F7
 ├── versioning/                <- snapshots historicos do documento-mestre
 ├── .github/
-│   ├── workflows/             <- portao de integracao (minimo normativo Baseline)
+│   ├── workflows/             <- portoes de integracao (F4) e publicacao (F5)
+│   │                             + re-auditoria agendada (F7)
 │   └── ISSUE_TEMPLATE/        <- critica no formato do metodo
 └── guias/
+    ├── f3-do-zero-absoluto.md <- do "nunca programei" ate a maquina pronta
     ├── claude-code.md         <- adocao no Claude Code (~/.claude/CLAUDE.md
     │                             + arquivos de projeto)
     └── vs-code.md             <- adocao no VS Code
@@ -503,6 +514,7 @@ Critério de adoção dos guias: **caminho mínimo — primeiro portão rodando 
 
 ### Changelog
 
+- **v0.3.2** — Mínimo executável completo + porta de entrada do zero absoluto. Novos executáveis: workflow do **Portão de Publicação (F5)** (SAST ampliado p/ci+security-audit+secrets, acionado pelo Operador) e **re-auditoria agendada (F7)** (deps+segredos toda semana; run vermelho = CVE novo entra pelo Circuito de Correção). Novos normativos/operacionais: `docs/checklist-owasp.md` (Top 10 operacional com evidência por item), templates de **spec de bloco** (com "abuso considerado" — A04), **runbook de Fast-Track**, **aceite formal de risco** e **rollback testado**. Adoção: `guias/f3-do-zero-absoluto.md` (da criação da conta GitHub à máquina pronta, Windows e Linux) e `exemplos/percurso-completo.md` (F0→F7 concreto). Norma: §10 ganha "Quem opera o Git — a divisão de propriedade" (Operador funda a propriedade e clica o merge; Executor opera a mecânica) — resposta a questão levantada em revisão do PR #3.
 - **v0.3.1** — Correções estruturais pós-publicação, sem mudança de norma: nome estável `DOCUMENTO-MESTRE.md` (conserta os links do README e dos guias), arquivo `LICENSE` (MIT), `PUBLICACAO.md` movido para `docs/historico/`, template de Issue no formato do método. **Portão de exemplo endurecido para cumprir a própria norma:** nenhuma suíte detectada = REPROVADO (§6), SAST (Semgrep) no Baseline, actions pinadas por SHA de commit (§17), evidência `evidencia.json` + outputs brutos publicados pelo próprio job (Anel 1, §9), detecção de "régua alterada" (atores/ ou workflows tocados no PR) com aviso obrigatório e `templates/CODEOWNERS` para equipes (antipadrão *Régua invisível*), `npm ci --ignore-scripts` no ambiente do veredito.
 - **v0.3** — Pós-auditoria externa (2 relatórios independentes, 10 achados; 7 procedentes aplicados, 3 rejeitados com fato). Novidades: §4.1 (enforcement social vs. físico), regra anti-injeção (§4), Fast-Track endurecido com rollback-first, escopo de diff, runbook e telemetria anti-abuso (§7.1), regra de origem da evidência + fallback normativo sem OIDC (§9), critérios objetivos de ambiente elegível (§17), serialização do estado por merge queue (§11), checkpoint de compreensão do Modo Mentor (§13), três antipadrões novos. Documento aprovado para publicação; críticas futuras via Issues.
 - **v0.2** — Dez alterações da rodada de crítica externa (auditoria/compliance/produção): ambiente efêmero de veredito; atores como código (§3.5); assinatura keyless + transparência (Anel 3); Perfis de Conformidade (§14); Fast-Track (§7.1); acessibilidade nos portões; rollback obrigatório em F7 + kill switch (Regulado); Relatório de Conformidade dos Portões (§9.1); estado fragmentado em `status/` + decisão monorepo-first; Registro de Limites (§15). Quatro antipadrões novos.

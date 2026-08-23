@@ -17,15 +17,24 @@ const obrigatorios = [
   "docs/portoes.md",
   "docs/perfis.md",
   "docs/cadeia-de-evidencias.md",
+  "docs/checklist-owasp.md",
   "templates/STATUS.md",
   "templates/veredito-portao.md",
+  "templates/spec-bloco.md",
+  "templates/runbook-fast-track.md",
+  "templates/aceite-de-risco.md",
+  "templates/rollback.md",
   "templates/CODEOWNERS",
   "templates/status/maquina.yaml",
   "templates/status/bloco-exemplo.yaml",
   "templates/evidencias/README.md",
+  "exemplos/percurso-completo.md",
+  "guias/f3-do-zero-absoluto.md",
   "guias/claude-code.md",
   "guias/vs-code.md",
   ".github/workflows/portao-integracao.yml",
+  ".github/workflows/portao-publicacao.yml",
+  ".github/workflows/reauditoria-agendada.yml",
 ];
 for (const rel of obrigatorios) {
   if (!existsSync(join(raiz, rel))) falhas.push(`arquivo obrigatório ausente: ${rel}`);
@@ -54,27 +63,35 @@ for (const arquivo of arquivosMd(raiz)) {
   }
 }
 
-// 3. Toda action do portão está pinada por SHA de commit (§17 — tag é mutável)
-const workflow = readFileSync(join(raiz, ".github/workflows/portao-integracao.yml"), "utf8");
-for (const m of workflow.matchAll(/uses:\s*(\S+)/g)) {
-  if (!/@[0-9a-f]{40}\b/.test(m[1])) {
-    falhas.push(`action não pinada por SHA no portão: ${m[1]}`);
+// 3–5. Invariantes de TODOS os workflows do portão
+const dirWorkflows = join(raiz, ".github/workflows");
+for (const nome of readdirSync(dirWorkflows).filter((n) => n.endsWith(".yml"))) {
+  const workflow = readFileSync(join(dirWorkflows, nome), "utf8");
+
+  // 3. Toda action pinada por SHA de commit (§17 — tag é mutável)
+  for (const m of workflow.matchAll(/uses:\s*(\S+)/g)) {
+    if (!/@[0-9a-f]{40}\b/.test(m[1])) {
+      falhas.push(`action não pinada por SHA em ${nome}: ${m[1]}`);
+    }
+  }
+
+  // 5. Anti-injeção: refs controláveis (head_ref/base_ref) só entram por
+  // atribuição em env: ou concurrency — nunca interpoladas em script.
+  // Achado real do SAST no primeiro run (PR #3).
+  for (const [i, linha] of workflow.split("\n").entries()) {
+    if (!/\$\{\{\s*github\.(head_ref|base_ref)/.test(linha)) continue;
+    const contextoSeguro = /^\s+(?:[A-Z_]+:\s+\$\{\{|group:\s)/.test(linha);
+    if (!contextoSeguro) {
+      falhas.push(`interpolação insegura de ref em ${nome} (linha ${i + 1}): use env:`);
+    }
   }
 }
 
-// 4. A regra "nenhuma suíte = reprovado" continua presente no portão
-if (!workflow.includes("nenhuma stack reconhecida")) {
-  falhas.push("o portão perdeu a regra 'nenhuma suíte detectada = REPROVADO' (§6)");
-}
-
-// 5. Anti-injeção no próprio portão: refs controláveis pelo autor do PR
-// (head_ref/base_ref) só podem entrar por atribuição em env: ou concurrency —
-// nunca interpoladas em script. Achado real do SAST no primeiro run (PR #3).
-for (const [i, linha] of workflow.split("\n").entries()) {
-  if (!/\$\{\{\s*github\.(head_ref|base_ref)/.test(linha)) continue;
-  const contextoSeguro = /^\s+(?:[A-Z_]+:\s+\$\{\{|group:\s)/.test(linha);
-  if (!contextoSeguro) {
-    falhas.push(`interpolação insegura de ref no portão (linha ${i + 1}): use env:`);
+// 4. A regra "nenhuma suíte = reprovado" continua presente nos portões que testam
+for (const nome of ["portao-integracao.yml", "portao-publicacao.yml"]) {
+  const workflow = readFileSync(join(dirWorkflows, nome), "utf8");
+  if (!workflow.includes("nenhuma stack reconhecida")) {
+    falhas.push(`${nome} perdeu a regra 'nenhuma suíte detectada = REPROVADO' (§6)`);
   }
 }
 
