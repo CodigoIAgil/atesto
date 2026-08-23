@@ -33,6 +33,20 @@ Settings → Advanced Security:
 - [ ] ✅ Dependabot alerts
 - [ ] ✅ Dependabot security updates (PRs automáticos de correção — que passam pelo portão como qualquer PR)
 
+## 4.1 Code scanning — CodeQL (segundo motor de SAST)
+Settings → Advanced Security → Code scanning → CodeQL analysis:
+- [ ] ✅ Enable → **Default setup** (gerenciado pelo GitHub; não cria arquivo em
+  `.github/workflows/`, portanto não toca na régua do portão)
+- Racional: o portão já roda Semgrep (casamento de padrões); o CodeQL rastreia o fluxo
+  dos dados pelo programa — motores diferentes pegam falhas diferentes (§15: nenhuma
+  ferramenta enxerga 100%). Gratuito em repositório público; em privado exige plano
+  Advanced Security.
+- Achados aparecem em Security → Code scanning e como anotações no PR; por padrão
+  **avisam sem bloquear**. Para torná-lo bloqueante (decisão de espessura de régua do
+  Operador), adicione o check do CodeQL aos Required status checks do ruleset da main.
+- Nos projetos criados com `iniciar.sh` (aplicações Node/Python reais), ative também —
+  é onde o segundo motor rende mais.
+
 ## 5. Endurecimento do Actions (o território do veredito)
 Settings → Actions → General:
 - [ ] Actions permissions: **Allow <sua-conta> actions and select non-<sua-conta> actions** →
