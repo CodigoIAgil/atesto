@@ -11,6 +11,7 @@ const obrigatorios = [
   "README.md",
   "INICIE-AQUI.md",
   "iniciar.sh",
+  "iniciar.ps1",
   "LICENSE",
   "DOCUMENTO-MESTRE.md",
   "atores/raciocinio.md",
@@ -22,6 +23,7 @@ const obrigatorios = [
   "docs/checklist-owasp.md",
   "docs/seguranca-do-repositorio.md",
   "templates/STATUS.md",
+  "templates/triagem-f0.md",
   "templates/veredito-portao.md",
   "templates/spec-bloco.md",
   "templates/runbook-fast-track.md",
@@ -95,6 +97,21 @@ for (const nome of ["portao-integracao.yml", "portao-publicacao.yml"]) {
   const workflow = readFileSync(join(dirWorkflows, nome), "utf8");
   if (!workflow.includes("nenhuma stack reconhecida")) {
     falhas.push(`${nome} perdeu a regra 'nenhuma suíte detectada = REPROVADO' (§6)`);
+  }
+}
+
+// 6. A régua da camada de Raciocínio (v0.3.4): o Portão de Prompt existe e o
+// estado guarda o ambiente do Operador. Foi a falha da homologação — vira invariante.
+const raciocinio = readFileSync(join(raiz, "atores/raciocinio.md"), "utf8");
+for (const marca of ["Portão de Prompt", "Ambiente-alvo", "NÃO-VERIFICADA"]) {
+  if (!raciocinio.includes(marca)) {
+    falhas.push(`atores/raciocinio.md perdeu a régua do Portão de Prompt: falta "${marca}"`);
+  }
+}
+const maquina = readFileSync(join(raiz, "templates/status/maquina.yaml"), "utf8");
+for (const chave of ["operador:", "shell:"]) {
+  if (!maquina.includes(chave)) {
+    falhas.push(`templates/status/maquina.yaml perdeu o ambiente do Operador: falta "${chave}"`);
   }
 }
 

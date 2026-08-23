@@ -2,6 +2,11 @@
 perfil: baseline            # baseline | profissional | regulado
 fase: F4                    # F0..F7
 bloco_atual: bloco-exemplo
+operador:                   # calibração do F0 — sem isto, prompt de setup é exploratório
+  so: <windows | linux | macos>          # SISTEMA OPERACIONAL do Operador
+  shell: <powershell | bash | git-bash | zsh>  # terminal REAL onde ele digita
+  nivel_tecnico: <leigo | intermediario | avancado>  # calibra o Modo Mentor
+  calibrado_em: <AAAA-MM-DD>             # data da triagem F0; reconferir no Ritual 1
 ultimo_portao:
   portao: integracao        # arquitetura | integracao | publicacao
   bloco: bloco-exemplo
