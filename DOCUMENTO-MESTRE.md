@@ -6,8 +6,8 @@
 | Campo | Valor |
 | --- | --- |
 | Documento | Documento-Mestre (constituição do ecossistema) |
-| Versão | 0.3 — pós-auditoria externa (2 relatórios, 10 achados triados) |
-| Status | APROVADO PARA PUBLICAÇÃO — commit inicial |
+| Versão | 0.3.1 — correções estruturais pós-publicação (links, licença, portão de exemplo endurecido) |
+| Status | PUBLICADO |
 | Autoridade | Este documento prevalece sobre qualquer outro documento do ecossistema em caso de conflito |
 | Marca | "ATESTO" é parametrizável; a arquitetura não depende do nome |
 
@@ -450,7 +450,9 @@ Honestidade estrutural: prometer cobertura total seria a nossa própria aprovaç
 ```
 atesto/
 ├── README.md                  <- apresentacao clara e simples (30s + 5min)
-├── DOCUMENTO-MESTRE.md        <- este arquivo (constituicao)
+├── LICENSE                    <- MIT
+├── DOCUMENTO-MESTRE.md        <- este arquivo (constituicao; nome estavel,
+│                                 snapshots por versao em versioning/)
 ├── atores/
 │   ├── raciocinio.md          <- limites, regras brutais, formato de output
 │   ├── executor.md            <- operacao, Visao Complementar, restricoes
@@ -460,12 +462,17 @@ atesto/
 │   ├── portoes.md             <- especificacao normativa dos 3 portoes
 │   ├── cadeia-de-evidencias.md
 │   ├── perfis.md              <- requisitos por perfil de conformidade
-│   └── historico/             <- conteudo removido com valor de referencia
+│   └── historico/             <- conteudo removido/meta com valor de referencia
 ├── templates/
 │   ├── STATUS.md              <- template narrativo
 │   ├── status/                <- maquina.yaml e bloco.yaml de exemplo
 │   ├── veredito-portao.md     <- formato do veredito + evidencia
+│   ├── CODEOWNERS             <- protecao da regua (atores/ + workflows)
 │   └── evidencias/            <- estrutura padrao dos artefatos
+├── versioning/                <- snapshots historicos do documento-mestre
+├── .github/
+│   ├── workflows/             <- portao de integracao (minimo normativo Baseline)
+│   └── ISSUE_TEMPLATE/        <- critica no formato do metodo
 └── guias/
     ├── claude-code.md         <- adocao no Claude Code (~/.claude/CLAUDE.md
     │                             + arquivos de projeto)
@@ -496,6 +503,7 @@ Critério de adoção dos guias: **caminho mínimo — primeiro portão rodando 
 
 ### Changelog
 
+- **v0.3.1** — Correções estruturais pós-publicação, sem mudança de norma: nome estável `DOCUMENTO-MESTRE.md` (conserta os links do README e dos guias), arquivo `LICENSE` (MIT), `PUBLICACAO.md` movido para `docs/historico/`, template de Issue no formato do método. **Portão de exemplo endurecido para cumprir a própria norma:** nenhuma suíte detectada = REPROVADO (§6), SAST (Semgrep) no Baseline, actions pinadas por SHA de commit (§17), evidência `evidencia.json` + outputs brutos publicados pelo próprio job (Anel 1, §9), detecção de "régua alterada" (atores/ ou workflows tocados no PR) com aviso obrigatório e `templates/CODEOWNERS` para equipes (antipadrão *Régua invisível*), `npm ci --ignore-scripts` no ambiente do veredito.
 - **v0.3** — Pós-auditoria externa (2 relatórios independentes, 10 achados; 7 procedentes aplicados, 3 rejeitados com fato). Novidades: §4.1 (enforcement social vs. físico), regra anti-injeção (§4), Fast-Track endurecido com rollback-first, escopo de diff, runbook e telemetria anti-abuso (§7.1), regra de origem da evidência + fallback normativo sem OIDC (§9), critérios objetivos de ambiente elegível (§17), serialização do estado por merge queue (§11), checkpoint de compreensão do Modo Mentor (§13), três antipadrões novos. Documento aprovado para publicação; críticas futuras via Issues.
 - **v0.2** — Dez alterações da rodada de crítica externa (auditoria/compliance/produção): ambiente efêmero de veredito; atores como código (§3.5); assinatura keyless + transparência (Anel 3); Perfis de Conformidade (§14); Fast-Track (§7.1); acessibilidade nos portões; rollback obrigatório em F7 + kill switch (Regulado); Relatório de Conformidade dos Portões (§9.1); estado fragmentado em `status/` + decisão monorepo-first; Registro de Limites (§15). Quatro antipadrões novos.
 - **v0.1** — Consolidação inicial: atores, F0–F7, portões, circuito de correção, matriz de severidade, cadeia de evidências, rituais, Modo Mentor.

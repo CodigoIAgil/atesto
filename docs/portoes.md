@@ -12,6 +12,7 @@ Portão = checkpoint operado pelo Validador. O fluxo só continua com atestaçã
 - [ ] Testes unitários do bloco: 100% da suíte passando em ambiente efêmero elegível
 - [ ] Testes de contrato com TODOS os blocos já validados dos quais depende ou que dependem dele
 - [ ] Scanner de segredos: zero achados
+- [ ] SAST no diff do bloco (ex.: Semgrep, config `p/ci`): zero achados não triados
 - [ ] Auditoria de dependências: sem severidade média+
 - [ ] Blocos com UI (perfil Profissional+): varredura axe-core/Pa11y sem violações detectáveis
 - [ ] Evidência publicada pelo job; hashes (commit + atores/) registrados
