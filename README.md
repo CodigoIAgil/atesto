@@ -50,6 +50,6 @@ Versão 0.3 — primeira publicação, após duas rodadas de auditoria adversari
 ## Licença, autoria e marca
 
 MIT — use, adapte, critique, **mantendo o aviso de copyright** (é a única exigência da licença).
-© 2026 **Fabiano Dos Santos** — CEO, [CódigoIAgil](https://github.com/CodigoIAgil).
+© 2026 **Fabiano Dos Santos** (CódigoIAgil) (https://github.com/CodigoIAgil).
 "ATESTO" é marca do projeto: a licença cobre o conteúdo, não cede o uso do nome
 (ver [docs/seguranca-do-repositorio.md](docs/seguranca-do-repositorio.md)).
