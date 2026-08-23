@@ -1,6 +1,6 @@
 {
   "name": "atesto-metodo",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "Suíte de validação dos invariantes do repositório do método ATESTO",
   "type": "module",

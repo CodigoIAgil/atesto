@@ -26,9 +26,10 @@ Quatro atores. Uma máquina de estados (F0–F7). Três portões. Uma cadeia de 
 
 ## Comece aqui
 
-1. Leia o [DOCUMENTO-MESTRE.md](DOCUMENTO-MESTRE.md) — a constituição (15 min).
-2. Siga o guia da sua ferramenta: [Claude Code](guias/claude-code.md) ou [VS Code](guias/vs-code.md) — primeiro portão em ~30 minutos (perfil Baseline).
-3. Perfis de conformidade (Baseline → Profissional → Regulado): [docs/perfis.md](docs/perfis.md).
+1. **Nunca programou?** Comece pelo [guia do zero absoluto](guias/f3-do-zero-absoluto.md) — da criação da conta GitHub à máquina pronta (Windows ou Linux).
+2. Leia o [DOCUMENTO-MESTRE.md](DOCUMENTO-MESTRE.md) — a constituição (15 min). Quer ver o método em ação antes? [Um projeto real atravessando F0→F7](exemplos/percurso-completo.md).
+3. Siga o guia da sua ferramenta: [Claude Code](guias/claude-code.md) ou [VS Code](guias/vs-code.md) — primeiro portão em ~30 minutos (perfil Baseline).
+4. Perfis de conformidade (Baseline → Profissional → Regulado): [docs/perfis.md](docs/perfis.md).
 
 ## Estrutura
 

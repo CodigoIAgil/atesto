@@ -1,0 +1,148 @@
+# ATESTO — Portão de Publicação (F5, perfil Baseline)
+#
+# Acionamento: MANUAL, pelo Operador (aba Actions → este workflow → Run workflow),
+# quando todos os blocos estiverem atestados e a release for candidata.
+# É a auditoria completa do produto: tudo do portão de integração + SAST ampliado.
+#
+# O que este job NÃO cobre (resíduo manual, ver docs/checklist-owasp.md):
+# A04 (design), parte de A05 (config de deploy) e A09 (logs) são percorridos pela
+# camada de Raciocínio e registrados no STATUS.md — o job lembra, mas não substitui.
+name: atesto-portao-publicacao
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portao-publicacao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Preparar diretório de evidência
+        run: mkdir -p evidencia-portao
+
+      - name: Hash dos atores (régua auditável)
+        run: |
+          if [ ! -d atores ]; then
+            echo "ERRO: diretório atores/ ausente — instale o ATESTO antes do portão."
+            exit 1
+          fi
+          find atores -type f -name '*.md' -exec sha256sum {} \; | sort | sha256sum | awk '{print $1}' > evidencia-portao/atores.hash
+
+      - name: Scanner de segredos (gitleaks — histórico completo)
+        id: segredos
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Conta de ORGANIZAÇÃO exige GITLEAKS_LICENSE (gratuito p/ conta pessoal):
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Testes (suíte completa; nenhuma suíte = REPROVADO)
+        id: testes
+        run: |
+          set -eo pipefail
+          executado=0
+          if [ -f package.json ]; then
+            npm ci --ignore-scripts
+            npm test 2>&1 | tee evidencia-portao/testes-node.txt
+            executado=1
+          fi
+          if [ -f requirements.txt ] || [ -f pyproject.toml ]; then
+            python3 -m pip install --quiet --upgrade pip
+            if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+            if [ -f pyproject.toml ]; then python3 -m pip install -e .; fi
+            python3 -m pip install --quiet pytest
+            python3 -m pytest -q 2>&1 | tee evidencia-portao/testes-python.txt
+            executado=1
+          fi
+          if [ "$executado" -eq 0 ]; then
+            echo 'ERRO: nenhuma stack reconhecida — sem suíte executada o portão NÃO abre (§6).'
+            exit 1
+          fi
+
+      - name: SAST ampliado (Semgrep — ci + security-audit + secrets)
+        id: sast
+        run: |
+          set -eo pipefail
+          python3 -m pip install --quiet semgrep
+          semgrep --version | tee evidencia-portao/semgrep-versao.txt
+          semgrep scan --config p/ci --config p/security-audit --config p/secrets \
+            --error --json --output evidencia-portao/semgrep.json .
+
+      - name: Auditoria de dependências
+        id: deps
+        run: |
+          set -eo pipefail
+          if [ -f package.json ]; then
+            npm audit --audit-level=moderate 2>&1 | tee evidencia-portao/deps-node.txt
+          fi
+          if [ -f requirements.txt ] || [ -f pyproject.toml ]; then
+            python3 -m pip install --quiet pip-audit
+            if [ -f requirements.txt ]; then
+              pip-audit -r requirements.txt 2>&1 | tee evidencia-portao/deps-python.txt
+            else
+              pip-audit 2>&1 | tee evidencia-portao/deps-python.txt
+            fi
+          fi
+
+      - name: Lembrete do resíduo manual (não bloqueia — registra)
+        run: |
+          {
+            echo "ITENS MANUAIS DO CHECKLIST OWASP (docs/checklist-owasp.md):"
+            echo "- A04 Design inseguro: 'abuso considerado' presente em cada spec?"
+            echo "- A05 Config de deploy: debug off, erros sem stack trace, headers?"
+            echo "- A09 Logs: eventos de segurança logados, sem segredos, onde olhar?"
+            echo "Estes itens fecham no STATUS.md com evidência citada — antes do merge da release."
+          } | tee evidencia-portao/residuo-manual.txt
+
+      - name: Gerar evidencia.json (Anel 1)
+        if: always()
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          RUN_ID: ${{ github.run_id }}
+          R_SEGREDOS: ${{ steps.segredos.outcome }}
+          R_TESTES: ${{ steps.testes.outcome }}
+          R_SAST: ${{ steps.sast.outcome }}
+          R_DEPS: ${{ steps.deps.outcome }}
+        run: |
+          jq -n \
+            --arg portao "publicacao" \
+            --arg ref "$REF_NAME" \
+            --arg commit "$COMMIT_SHA" \
+            --arg atores_hash "$(cat evidencia-portao/atores.hash 2>/dev/null || echo ausente)" \
+            --arg workflow "$WORKFLOW_REF" \
+            --arg run_id "$RUN_ID" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg segredos "$R_SEGREDOS" \
+            --arg testes "$R_TESTES" \
+            --arg sast "$R_SAST" \
+            --arg deps "$R_DEPS" \
+            '{
+              portao: $portao,
+              ref: $ref,
+              commit: $commit,
+              atores_hash: $atores_hash,
+              ambiente: {tipo: "ci-efemero", workflow: $workflow, run_id: $run_id, runner: "ubuntu-latest"},
+              timestamp: $timestamp,
+              residuo_manual: "ver residuo-manual.txt — fecha no STATUS.md",
+              execucoes: {segredos: $segredos, testes: $testes, sast: $sast, dependencias: $deps},
+              veredito: (if ($segredos == "success" and $testes == "success" and $sast == "success" and $deps == "success")
+                         then "APROVADO" else "REPROVADO" end)
+            }' > evidencia-portao/evidencia.json
+          cat evidencia-portao/evidencia.json
+
+      - name: Publicar evidência (origem = este job)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: evidencia-publicacao-${{ github.sha }}
+          path: evidencia-portao/

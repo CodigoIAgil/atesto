@@ -1,0 +1,93 @@
+# ATESTO — Re-auditoria agendada (F7, regime permanente)
+#
+# "Segurança não se resolve uma vez": este job roda toda semana mesmo sem ninguém
+# mexer no código, porque CVE novo nasce em dependência velha. Run VERMELHO significa
+# que uma vulnerabilidade foi publicada afetando sua stack — o GitHub notifica o dono
+# do repositório por e-mail, e o achado entra pelo Circuito de Correção (§7) com a
+# matriz de severidade (§8). Crítico em produção habilita Fast-Track (§7.1).
+name: atesto-reauditoria
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # toda segunda-feira, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reauditoria:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Preparar diretório de evidência
+        run: mkdir -p evidencia-reauditoria
+
+      - name: Scanner de segredos (gitleaks — histórico completo)
+        id: segredos
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Conta de ORGANIZAÇÃO exige GITLEAKS_LICENSE (gratuito p/ conta pessoal):
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Auditoria de dependências (CVEs publicados desde o último run)
+        id: deps
+        run: |
+          set -eo pipefail
+          auditado=0
+          if [ -f package.json ]; then
+            npm ci --ignore-scripts
+            npm audit --audit-level=moderate 2>&1 | tee evidencia-reauditoria/deps-node.txt
+            auditado=1
+          fi
+          if [ -f requirements.txt ] || [ -f pyproject.toml ]; then
+            python3 -m pip install --quiet pip-audit
+            if [ -f requirements.txt ]; then
+              pip-audit -r requirements.txt 2>&1 | tee evidencia-reauditoria/deps-python.txt
+            else
+              python3 -m pip install --quiet -e . && pip-audit 2>&1 | tee evidencia-reauditoria/deps-python.txt
+            fi
+            auditado=1
+          fi
+          if [ "$auditado" -eq 0 ]; then
+            echo "AVISO: nenhuma stack com manifesto de dependências reconhecida." | tee evidencia-reauditoria/deps-aviso.txt
+          fi
+
+      - name: Gerar evidencia.json (Anel 1)
+        if: always()
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          RUN_ID: ${{ github.run_id }}
+          R_SEGREDOS: ${{ steps.segredos.outcome }}
+          R_DEPS: ${{ steps.deps.outcome }}
+        run: |
+          jq -n \
+            --arg portao "reauditoria-f7" \
+            --arg commit "$COMMIT_SHA" \
+            --arg workflow "$WORKFLOW_REF" \
+            --arg run_id "$RUN_ID" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg segredos "$R_SEGREDOS" \
+            --arg deps "$R_DEPS" \
+            '{
+              portao: $portao, commit: $commit,
+              ambiente: {tipo: "ci-efemero", workflow: $workflow, run_id: $run_id, runner: "ubuntu-latest"},
+              timestamp: $timestamp,
+              execucoes: {segredos: $segredos, dependencias: $deps},
+              veredito: (if ($segredos == "success" and $deps == "success") then "SEM-NOVOS-ACHADOS" else "ACHADO-NOVO — Circuito de Correção" end)
+            }' > evidencia-reauditoria/evidencia.json
+          cat evidencia-reauditoria/evidencia.json
+
+      - name: Publicar evidência (origem = este job)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: evidencia-reauditoria-${{ github.run_id }}
+          path: evidencia-reauditoria/
