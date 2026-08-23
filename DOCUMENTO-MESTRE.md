@@ -6,7 +6,7 @@
 | Campo | Valor |
 | --- | --- |
 | Documento | Documento-Mestre (constituição do ecossistema) |
-| Versão | 0.3.2 — mínimo executável completo (portões F5/F7, checklist OWASP, templates operacionais, guia do zero absoluto) |
+| Versão | 0.3.3 — pacote de um comando (iniciar.sh + INICIE-AQUI), checklist de segurança do repositório, titularidade |
 | Status | PUBLICADO |
 | Autoridade | Este documento prevalece sobre qualquer outro documento do ecossistema em caso de conflito |
 | Marca | "ATESTO" é parametrizável; a arquitetura não depende do nome |
@@ -452,7 +452,9 @@ Honestidade estrutural: prometer cobertura total seria a nossa própria aprovaç
 ```
 atesto/
 ├── README.md                  <- apresentacao clara e simples (30s + 5min)
-├── LICENSE                    <- MIT
+├── INICIE-AQUI.md             <- o pacote em um comando (download -> extrair -> iniciar.sh)
+├── iniciar.sh                 <- cria um projeto novo com o metodo instalado
+├── LICENSE                    <- MIT (titular: Fabiano Dos Santos — CEO, CodigoIAgil)
 ├── DOCUMENTO-MESTRE.md        <- este arquivo (constituicao; nome estavel,
 │                                 snapshots por versao em versioning/)
 ├── atores/
@@ -465,6 +467,7 @@ atesto/
 │   ├── cadeia-de-evidencias.md
 │   ├── perfis.md              <- requisitos por perfil de conformidade
 │   ├── checklist-owasp.md     <- OWASP Top 10 operacional (F5)
+│   ├── seguranca-do-repositorio.md <- checklist de Settings do Operador + marca/copia
 │   └── historico/             <- conteudo removido/meta com valor de referencia
 ├── templates/
 │   ├── STATUS.md              <- template narrativo
@@ -514,6 +517,7 @@ Critério de adoção dos guias: **caminho mínimo — primeiro portão rodando 
 
 ### Changelog
 
+- **v0.3.3** — O ATESTO vira pacote de um comando: `iniciar.sh` cria um projeto novo com o método completo instalado (atores, 3 portões, estado, CLAUDE.md do Executor, checklist e templates) e o Git inicializado; `INICIE-AQUI.md` documenta as três formas de obter o pacote (template, ZIP, clone) e o fluxo pós-comando. `docs/seguranca-do-repositorio.md`: checklist de Settings do Operador (rulesets de branch e de TAG, secret scanning + push protection, Dependabot, endurecimento do Actions, 2FA, vulnerability reporting) e a seção honesta sobre cópia não autorizada (licença × marca; recomendação: MIT + registro da marca no INPI). Titularidade explícita: Fabiano Dos Santos — CEO, CódigoIAgil (LICENSE, README, package.json).
 - **v0.3.2** — Mínimo executável completo + porta de entrada do zero absoluto. Novos executáveis: workflow do **Portão de Publicação (F5)** (SAST ampliado p/ci+security-audit+secrets, acionado pelo Operador) e **re-auditoria agendada (F7)** (deps+segredos toda semana; run vermelho = CVE novo entra pelo Circuito de Correção). Novos normativos/operacionais: `docs/checklist-owasp.md` (Top 10 operacional com evidência por item), templates de **spec de bloco** (com "abuso considerado" — A04), **runbook de Fast-Track**, **aceite formal de risco** e **rollback testado**. Adoção: `guias/f3-do-zero-absoluto.md` (da criação da conta GitHub à máquina pronta, Windows e Linux) e `exemplos/percurso-completo.md` (F0→F7 concreto). Norma: §10 ganha "Quem opera o Git — a divisão de propriedade" (Operador funda a propriedade e clica o merge; Executor opera a mecânica) — resposta a questão levantada em revisão do PR #3.
 - **v0.3.1** — Correções estruturais pós-publicação, sem mudança de norma: nome estável `DOCUMENTO-MESTRE.md` (conserta os links do README e dos guias), arquivo `LICENSE` (MIT), `PUBLICACAO.md` movido para `docs/historico/`, template de Issue no formato do método. **Portão de exemplo endurecido para cumprir a própria norma:** nenhuma suíte detectada = REPROVADO (§6), SAST (Semgrep) no Baseline, actions pinadas por SHA de commit (§17), evidência `evidencia.json` + outputs brutos publicados pelo próprio job (Anel 1, §9), detecção de "régua alterada" (atores/ ou workflows tocados no PR) com aviso obrigatório e `templates/CODEOWNERS` para equipes (antipadrão *Régua invisível*), `npm ci --ignore-scripts` no ambiente do veredito.
 - **v0.3** — Pós-auditoria externa (2 relatórios independentes, 10 achados; 7 procedentes aplicados, 3 rejeitados com fato). Novidades: §4.1 (enforcement social vs. físico), regra anti-injeção (§4), Fast-Track endurecido com rollback-first, escopo de diff, runbook e telemetria anti-abuso (§7.1), regra de origem da evidência + fallback normativo sem OIDC (§9), critérios objetivos de ambiente elegível (§17), serialização do estado por merge queue (§11), checkpoint de compreensão do Modo Mentor (§13), três antipadrões novos. Documento aprovado para publicação; críticas futuras via Issues.

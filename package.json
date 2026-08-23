@@ -1,8 +1,9 @@
 {
   "name": "atesto-metodo",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "Suíte de validação dos invariantes do repositório do método ATESTO",
+  "author": "Fabiano Dos Santos — CEO, CódigoIAgil",
   "type": "module",
   "scripts": {
     "test": "node tests/valida-repo.mjs"

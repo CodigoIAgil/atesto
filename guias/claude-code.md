@@ -27,6 +27,10 @@ Conta no GitHub criada e logada no navegador.
 
 ## Etapa 1 — Instalar o método no seu projeto (5 min)
 
+**Projeto NOVO? Use o atalho de um comando** — da pasta do atesto: `bash iniciar.sh nome-do-projeto`
+faz esta etapa, a Etapa 2 e o `git init` de uma vez (ver [INICIE-AQUI.md](../INICIE-AQUI.md));
+pule direto para a Etapa 3. Para projeto EXISTENTE, siga os comandos abaixo.
+
 Na pasta do seu projeto (novo ou existente):
 
 ```bash

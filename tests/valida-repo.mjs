@@ -9,6 +9,8 @@ const falhas = [];
 // 1. Arquivos normativos obrigatórios existem
 const obrigatorios = [
   "README.md",
+  "INICIE-AQUI.md",
+  "iniciar.sh",
   "LICENSE",
   "DOCUMENTO-MESTRE.md",
   "atores/raciocinio.md",
@@ -18,6 +20,7 @@ const obrigatorios = [
   "docs/perfis.md",
   "docs/cadeia-de-evidencias.md",
   "docs/checklist-owasp.md",
+  "docs/seguranca-do-repositorio.md",
   "templates/STATUS.md",
   "templates/veredito-portao.md",
   "templates/spec-bloco.md",
