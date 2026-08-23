@@ -67,6 +67,17 @@ if (!workflow.includes("nenhuma stack reconhecida")) {
   falhas.push("o portão perdeu a regra 'nenhuma suíte detectada = REPROVADO' (§6)");
 }
 
+// 5. Anti-injeção no próprio portão: refs controláveis pelo autor do PR
+// (head_ref/base_ref) só podem entrar por atribuição em env: ou concurrency —
+// nunca interpoladas em script. Achado real do SAST no primeiro run (PR #3).
+for (const [i, linha] of workflow.split("\n").entries()) {
+  if (!/\$\{\{\s*github\.(head_ref|base_ref)/.test(linha)) continue;
+  const contextoSeguro = /^\s+(?:[A-Z_]+:\s+\$\{\{|group:\s)/.test(linha);
+  if (!contextoSeguro) {
+    falhas.push(`interpolação insegura de ref no portão (linha ${i + 1}): use env:`);
+  }
+}
+
 if (falhas.length > 0) {
   console.error(`REPROVADO — ${falhas.length} invariante(s) violado(s):`);
   for (const f of falhas) console.error(`  - ${f}`);

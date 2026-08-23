@@ -48,8 +48,13 @@ jobs:
 
       - name: Régua alterada? (atores/ ou workflows tocados neste PR)
         id: regua
+        env:
+          # Expressões ${{ }} NUNCA entram direto em `run:` — nome de branch é
+          # controlável pelo autor do PR e viraria injeção de shell (achado do
+          # próprio SAST deste portão). Via env, o shell recebe variável, não texto.
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          alterados=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD -- atores/ .github/workflows/ || true)
+          alterados=$(git diff --name-only "origin/${BASE_REF}"...HEAD -- atores/ .github/workflows/ || true)
           if [ -n "$alterados" ]; then
             echo "regua_alterada=true" >> "$GITHUB_OUTPUT"
             printf '%s\n' "$alterados" > evidencia-portao/regua-alterada.txt
@@ -124,20 +129,32 @@ jobs:
 
       - name: Gerar evidencia.json (Anel 1)
         if: always()
+        env:
+          # Mesma regra anti-injeção: todo valor dinâmico entra por env, nunca
+          # interpolado dentro do script (BLOCO é nome de branch = controlável).
+          BLOCO: ${{ github.head_ref }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          RUN_ID: ${{ github.run_id }}
+          REGUA_ALTERADA: ${{ steps.regua.outputs.regua_alterada || 'null' }}
+          R_SEGREDOS: ${{ steps.segredos.outcome }}
+          R_TESTES: ${{ steps.testes.outcome }}
+          R_SAST: ${{ steps.sast.outcome }}
+          R_DEPS: ${{ steps.deps.outcome }}
         run: |
           jq -n \
             --arg portao "integracao" \
-            --arg bloco "${{ github.head_ref }}" \
-            --arg commit "${{ github.event.pull_request.head.sha }}" \
+            --arg bloco "$BLOCO" \
+            --arg commit "$COMMIT_SHA" \
             --arg atores_hash "$(cat evidencia-portao/atores.hash 2>/dev/null || echo ausente)" \
-            --arg workflow "${{ github.workflow_ref }}" \
-            --arg run_id "${{ github.run_id }}" \
+            --arg workflow "$WORKFLOW_REF" \
+            --arg run_id "$RUN_ID" \
             --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --argjson regua_alterada "${{ steps.regua.outputs.regua_alterada || 'null' }}" \
-            --arg segredos "${{ steps.segredos.outcome }}" \
-            --arg testes "${{ steps.testes.outcome }}" \
-            --arg sast "${{ steps.sast.outcome }}" \
-            --arg deps "${{ steps.deps.outcome }}" \
+            --argjson regua_alterada "$REGUA_ALTERADA" \
+            --arg segredos "$R_SEGREDOS" \
+            --arg testes "$R_TESTES" \
+            --arg sast "$R_SAST" \
+            --arg deps "$R_DEPS" \
             '{
               portao: $portao,
               bloco: $bloco,
