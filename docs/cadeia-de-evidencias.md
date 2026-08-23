@@ -19,6 +19,13 @@
 }
 ```
 
+## Implementação de referência (Baseline)
+O workflow `.github/workflows/portao-integracao.yml` publica, **pelo próprio job**:
+`evidencia.json` (subconjunto mínimo do schema acima, com veredito derivado dos exit
+codes reais + campo `regua_alterada` quando o PR toca `atores/` ou workflows),
+`atores.hash` e os outputs brutos de testes, SAST e auditoria de dependências.
+Contagem de severidades agregada e assinatura entram nos perfis Profissional+.
+
 ## Verificações do orquestrador (Anel 2)
 Bloqueia a transição se: artefato ausente · exit code divergente · hash de commit não corresponde ao HEAD do PR · hash de atores/ não corresponde · origem não é o job de validação · ambiente não elegível (4 critérios do §17 do mestre).
 

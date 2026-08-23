@@ -37,12 +37,18 @@ cp -r ../atesto/atores .
 mkdir -p status
 cp ../atesto/templates/STATUS.md .
 cp ../atesto/templates/status/maquina.yaml status/
+cp ../atesto/templates/status/bloco-exemplo.yaml status/
 mkdir -p .github/workflows
 cp ../atesto/.github/workflows/portao-integracao.yml .github/workflows/
 
 ls atores/
 # Esperado: executor.md  raciocinio.md  validador.md
 ```
+
+**Equipe (2+ pessoas)?** Copie também `templates/CODEOWNERS` para `.github/CODEOWNERS`
+(troque `@SEU-USUARIO`) — ele impede que a régua do portão (atores/ e workflows) seja
+alterada sem revisão do Operador. Projeto solo: pule (as instruções dentro do próprio
+arquivo explicam por quê) e confie no aviso "régua alterada" que o portão emite.
 
 ## Etapa 2 — Configurar o Claude Code como Executor (5 min)
 
@@ -84,10 +90,17 @@ git push -u origin main
 
 **Branch protection (o mecanismo físico do portão):**
 GitHub → seu repo → **Settings → Branches → Add branch ruleset** →
-Ruleset name: `portao-main` · Target: `main` · marque:
+Ruleset name: `portao-main` · Enforcement: Active · Target: `main` · marque:
 - ✅ Require a pull request before merging
 - ✅ Require status checks to pass → busque e selecione `portao` (aparece após o primeiro PR rodar o workflow)
-→ **Create**.
+  - ✅ Require branches to be up to date before merging (dois PRs verdes isolados podem quebrar a main juntos)
+- ✅ Block force pushes
+→ **Create**. **Não adicione ninguém à Bypass list.**
+
+**Honestidade do mecanismo:** como admin do seu próprio repositório, você **pode**
+desativar esta proteção a qualquer momento — para você, o portão é físico contra a IA,
+mas é disciplina contra você mesmo. Desligar a proteção é uma decisão de negócio:
+registre-a por escrito no STATUS.md (Regra da Soberania), nunca use como atalho.
 
 ## Etapa 4 — O primeiro bloco atravessando o portão (10 min)
 
@@ -130,5 +143,9 @@ Se os seis itens passaram, você validou na prática: fronteira epistêmica + po
 
 ## Problemas comuns
 - **Check não aparece na branch protection:** ele só fica selecionável depois do primeiro PR executar o workflow. Abra o PR primeiro, depois volte ao ruleset.
+- **Portão falhou com "nenhuma stack reconhecida":** o workflow de exemplo detecta Node (`package.json`) e Python (`requirements.txt`/`pyproject.toml`). Outra stack (Go, Java, PHP…)? Peça à camada de Raciocínio um prompt para adaptar o step de testes — a regra a preservar é: **sem suíte executada, o portão não abre**. Isso vale também para projeto Node sem script `test`: crie os testes; "finalizado sem teste" não existe.
 - **`npm audit` falha por dependência de dev:** avalie a severidade; média+ bloqueia por regra. Corrija a versão via prompt do Raciocínio — nunca ignore com flag.
+- **Semgrep (SAST) reprovou:** cada achado traz arquivo, linha e regra violada. Leve o achado (fato) ao Raciocínio pelo Circuito de Correção — nunca suprima a regra para "passar".
+- **Gitleaks falhou pedindo licença:** repositório em conta de **organização** exige `GITLEAKS_LICENSE` (gratuita para conta pessoal) — veja o comentário no próprio workflow.
+- **O portão avisou "régua alterada":** o PR mexe em `atores/` ou `.github/workflows/`. Revise esse diff você mesmo, linha a linha, antes do merge — é a régua que valida todo o resto.
 - **Claude Code "esqueceu" o papel:** peça "releia CLAUDE.md e atores/executor.md". Os arquivos são a memória do papel — por isso são versionados.

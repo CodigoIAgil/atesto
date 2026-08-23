@@ -1,0 +1,40 @@
+name: Crítica ao framework
+description: Crítica no formato do próprio método — seção exata, cenário concreto, reprodução.
+title: "[Crítica] "
+labels: ["critica"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Críticas são bem-vindas **no formato do próprio método**. Achado sem cenário
+        reproduzível será fechado com referência ao antipadrão *Crítica não verificada*
+        (§16 do DOCUMENTO-MESTRE.md).
+  - type: input
+    id: secao
+    attributes:
+      label: Seção exata citada
+      description: Documento + seção onde está o problema.
+      placeholder: "Ex.: DOCUMENTO-MESTRE.md §9 Anel 1 · docs/portoes.md — Portão de Integração"
+    validations:
+      required: true
+  - type: textarea
+    id: cenario
+    attributes:
+      label: Cenário concreto de falha
+      description: O que acontece, com quem, em que condições — fato, não opinião.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducao
+    attributes:
+      label: Como reproduzir
+      description: Passos verificáveis por qualquer pessoa que siga o método.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta de correção (opcional)
+      description: Se você enxerga a correção, descreva-a — ela entra no Circuito de Correção.
+    validations:
+      required: false

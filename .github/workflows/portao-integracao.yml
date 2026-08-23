@@ -1,53 +1,177 @@
-# ATESTO — Portão de Integração (exemplo mínimo, perfil Baseline)
-# Este workflow é o "ambiente efêmero elegível" do Baseline: runner da plataforma,
-# configuração versionada, Executor sem acesso ao runtime.
-# Marque este check como OBRIGATÓRIO na branch protection da main.
+# ATESTO — Portão de Integração (mínimo normativo do perfil Baseline)
+#
+# Este workflow É o "ambiente efêmero elegível" do Baseline: runner da plataforma,
+# configuração versionada, Executor sem acesso ao runtime nem às credenciais do job.
+# Marque o check `portao` como OBRIGATÓRIO na branch protection da main.
+#
+# Regras que este arquivo cumpre (e que qualquer adaptação DEVE preservar):
+# 1. Nenhuma suíte detectada = REPROVADO. "Finalizado sem teste" não existe (§6).
+# 2. Actions pinadas por SHA de commit — tag é mutável; SHA não (§17, supply chain).
+# 3. Evidência (Anel 1) gerada e publicada PELO PRÓPRIO JOB, nunca por commit (§9).
+# 4. Alteração em atores/ ou .github/workflows/ no PR é sinalizada como
+#    "régua alterada" — exige revisão consciente do Operador (antipadrão Régua invisível).
 name: atesto-portao-integracao
+
 on:
   pull_request:
     branches: [main]
+
 permissions:
   contents: read
+
+concurrency:
+  group: portao-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   portao:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
+      - name: Preparar diretório de evidência
+        run: mkdir -p evidencia-portao
+
       - name: Hash dos atores (régua auditável)
+        id: atores
         run: |
-          if [ -d atores ]; then
-            find atores -type f -name '*.md' -exec sha256sum {} \; | sort | sha256sum | tee atores.hash
+          if [ ! -d atores ]; then
+            echo "ERRO: diretório atores/ ausente — instale o ATESTO antes do portão."
+            exit 1
+          fi
+          find atores -type f -name '*.md' -exec sha256sum {} \; | sort | sha256sum | awk '{print $1}' > evidencia-portao/atores.hash
+          echo "hash=$(cat evidencia-portao/atores.hash)" >> "$GITHUB_OUTPUT"
+
+      - name: Régua alterada? (atores/ ou workflows tocados neste PR)
+        id: regua
+        env:
+          # Expressões ${{ }} NUNCA entram direto em `run:` — nome de branch é
+          # controlável pelo autor do PR e viraria injeção de shell (achado do
+          # próprio SAST deste portão). Via env, o shell recebe variável, não texto.
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          alterados=$(git diff --name-only "origin/${BASE_REF}"...HEAD -- atores/ .github/workflows/ || true)
+          if [ -n "$alterados" ]; then
+            echo "regua_alterada=true" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "$alterados" > evidencia-portao/regua-alterada.txt
+            echo "::warning::Este PR altera a RÉGUA do portão (atores/ ou workflow). O Operador deve revisar este diff pessoalmente antes do merge; em equipes, exija CODEOWNERS (templates/CODEOWNERS)."
           else
-            echo "ERRO: diretório atores/ ausente — instale o ATESTO antes do portão" && exit 1
+            echo "regua_alterada=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Scanner de segredos (gitleaks)
-        uses: gitleaks/gitleaks-action@v2
+        id: segredos
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Conta de ORGANIZAÇÃO exige GITLEAKS_LICENSE (gratuito para conta pessoal).
+          # Obtenha em gitleaks.io e grave como secret do repositório:
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
-      - name: Testes (detecção simples de stack)
+      - name: Testes (nenhuma suíte detectada = REPROVADO)
+        id: testes
         run: |
-          set -e
-          if [ -f package.json ]; then npm ci && npm test; fi
+          set -eo pipefail
+          executado=0
+          if [ -f package.json ]; then
+            # --ignore-scripts: código do PR não executa scripts arbitrários de install
+            # no ambiente do veredito. Se seu build EXIGE postinstall, remova a flag
+            # conscientemente e registre a decisão no STATUS.md.
+            npm ci --ignore-scripts
+            npm test 2>&1 | tee evidencia-portao/testes-node.txt
+            executado=1
+          fi
           if [ -f requirements.txt ] || [ -f pyproject.toml ]; then
-            pip install -r requirements.txt 2>/dev/null || pip install -e . 2>/dev/null || true
-            pip install pytest && pytest -q
+            python3 -m pip install --quiet --upgrade pip
+            if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+            if [ -f pyproject.toml ]; then python3 -m pip install -e .; fi
+            python3 -m pip install --quiet pytest
+            # pytest sem nenhum teste coletado retorna exit code 5 — e portanto REPROVA.
+            python3 -m pytest -q 2>&1 | tee evidencia-portao/testes-python.txt
+            executado=1
+          fi
+          if [ "$executado" -eq 0 ]; then
+            echo 'ERRO: nenhuma stack reconhecida (package.json / requirements.txt / pyproject.toml).'
+            echo 'O estado "finalizado sem teste" não existe no ATESTO (§6).'
+            echo 'Adapte este step à sua stack — sem suíte executada, o portão NÃO abre.'
+            exit 1
           fi
 
-      - name: Auditoria de dependências
+      - name: SAST (Semgrep)
+        id: sast
         run: |
-          set -e
-          if [ -f package.json ]; then npm audit --audit-level=moderate; fi
-          if [ -f requirements.txt ]; then pip install pip-audit && pip-audit -r requirements.txt; fi
+          set -eo pipefail
+          # Recomendado: pinar a versão (ex.: semgrep==X.Y.Z) e atualizá-la por PR,
+          # como qualquer mudança de régua. A versão usada fica registrada na evidência.
+          python3 -m pip install --quiet semgrep
+          semgrep --version | tee evidencia-portao/semgrep-versao.txt
+          semgrep scan --config p/ci --error --json --output evidencia-portao/semgrep.json .
+
+      - name: Auditoria de dependências
+        id: deps
+        run: |
+          set -eo pipefail
+          if [ -f package.json ]; then
+            npm audit --audit-level=moderate 2>&1 | tee evidencia-portao/deps-node.txt
+          fi
+          if [ -f requirements.txt ] || [ -f pyproject.toml ]; then
+            python3 -m pip install --quiet pip-audit
+            if [ -f requirements.txt ]; then
+              pip-audit -r requirements.txt 2>&1 | tee evidencia-portao/deps-python.txt
+            else
+              pip-audit 2>&1 | tee evidencia-portao/deps-python.txt
+            fi
+          fi
+
+      - name: Gerar evidencia.json (Anel 1)
+        if: always()
+        env:
+          # Mesma regra anti-injeção: todo valor dinâmico entra por env, nunca
+          # interpolado dentro do script (BLOCO é nome de branch = controlável).
+          BLOCO: ${{ github.head_ref }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          RUN_ID: ${{ github.run_id }}
+          REGUA_ALTERADA: ${{ steps.regua.outputs.regua_alterada || 'null' }}
+          R_SEGREDOS: ${{ steps.segredos.outcome }}
+          R_TESTES: ${{ steps.testes.outcome }}
+          R_SAST: ${{ steps.sast.outcome }}
+          R_DEPS: ${{ steps.deps.outcome }}
+        run: |
+          jq -n \
+            --arg portao "integracao" \
+            --arg bloco "$BLOCO" \
+            --arg commit "$COMMIT_SHA" \
+            --arg atores_hash "$(cat evidencia-portao/atores.hash 2>/dev/null || echo ausente)" \
+            --arg workflow "$WORKFLOW_REF" \
+            --arg run_id "$RUN_ID" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson regua_alterada "$REGUA_ALTERADA" \
+            --arg segredos "$R_SEGREDOS" \
+            --arg testes "$R_TESTES" \
+            --arg sast "$R_SAST" \
+            --arg deps "$R_DEPS" \
+            '{
+              portao: $portao,
+              bloco: $bloco,
+              commit: $commit,
+              atores_hash: $atores_hash,
+              ambiente: {tipo: "ci-efemero", workflow: $workflow, run_id: $run_id, runner: "ubuntu-latest"},
+              timestamp: $timestamp,
+              regua_alterada: $regua_alterada,
+              execucoes: {segredos: $segredos, testes: $testes, sast: $sast, dependencias: $deps},
+              veredito: (if ($segredos == "success" and $testes == "success" and $sast == "success" and $deps == "success")
+                         then "APROVADO" else "REPROVADO" end)
+            }' > evidencia-portao/evidencia.json
+          cat evidencia-portao/evidencia.json
 
       - name: Publicar evidência (origem = este job)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: evidencia-portao-${{ github.event.pull_request.head.sha }}
-          path: |
-            atores.hash
+          path: evidencia-portao/

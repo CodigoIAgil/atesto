@@ -1,0 +1,19 @@
+# templates/CODEOWNERS — proteção da RÉGUA do portão
+#
+# Copie este arquivo para `.github/CODEOWNERS` do SEU projeto e troque
+# @SEU-USUARIO pelo usuário (ou time) do GitHub que exerce o papel de Operador.
+# Depois, na branch protection da main, marque "Require review from Code Owners".
+#
+# Efeito: qualquer PR que altere os atores ou os workflows do portão só pode ser
+# mergeado com revisão explícita do Operador — o Executor não consegue afrouxar
+# a régua no mesmo PR que ela valida (antipadrão "Régua invisível", §16).
+#
+# ATENÇÃO — projeto SOLO: o GitHub não permite que o autor do PR aprove o próprio
+# PR; exigir Code Owners travaria você mesmo. Nesse caso NÃO ative a exigência:
+# confie no aviso "régua alterada" que o portão emite e revise pessoalmente o diff
+# de atores/ e .github/workflows/ antes de qualquer merge que os toque.
+# Em EQUIPE (perfil Profissional+), a exigência é obrigatória.
+
+/atores/            @SEU-USUARIO
+/.github/workflows/ @SEU-USUARIO
+/.github/CODEOWNERS @SEU-USUARIO

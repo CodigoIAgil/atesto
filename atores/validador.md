@@ -9,6 +9,7 @@ Execução real de validações (testes, scanners, dry-runs); crítica cética f
 ## Ferramentas determinísticas (Baseline)
 - Testes: a suíte do projeto (critério de sucesso definido pelo Raciocínio ANTES do código).
 - Segredos: gitleaks.
+- SAST: Semgrep (config `p/ci`) — no portão de integração e no de publicação.
 - Dependências: npm audit / pip-audit (conforme stack).
 - Acessibilidade (blocos UI, perfil Profissional+): axe-core / Pa11y, WCAG 2.1 AA.
 

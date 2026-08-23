@@ -1,0 +1,11 @@
+{
+  "name": "atesto-metodo",
+  "version": "0.3.1",
+  "private": true,
+  "description": "Suíte de validação dos invariantes do repositório do método ATESTO",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/valida-repo.mjs"
+  },
+  "license": "MIT"
+}
